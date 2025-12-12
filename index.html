@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UBLC Library Assistant - Libby</title>
+    <link rel="icon" type="image/x-icon" href="public/favicon.ico">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+   <!-- Onboarding Page -->
+    <div id="onboarding-page" class="page active">
+        <div class="onboarding-progress">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-1"></div>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-2"></div>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-3"></div>
+            </div>
+            <button class="skip-btn" onclick="skipOnboarding()">Skip</button>
+        </div>
+        
+        <div class="onboarding-content">
+            <div class="mascot-container">
+                <div id="onboarding-mascot" class="mascot-wrapper mascot-lg">
+                    <svg viewBox="0 0 200 200" class="mascot-svg">
+                        <circle cx="100" cy="100" r="80" fill="hsl(51, 100%, 50%)" class="mascot-head"/>
+                        <g class="mascot-eye-left">
+                            <ellipse cx="70" cy="85" rx="15" ry="18" fill="white"/>
+                            <circle class="eye-pupil" cx="70" cy="85" r="8" fill="black"/>
+                            <circle class="eye-highlight" cx="67" cy="82" r="3" fill="white"/>
+                        </g>
+                        <g class="mascot-eye-right">
+                            <ellipse cx="130" cy="85" rx="15" ry="18" fill="white"/>
+                            <circle class="eye-pupil" cx="130" cy="85" r="8" fill="black"/>
+                            <circle class="eye-highlight" cx="127" cy="82" r="3" fill="white"/>
+                        </g>
+                        <path d="M 65 120 Q 100 150 135 120" stroke="black" stroke-width="4" fill="none" stroke-linecap="round"/>
+                    </svg>
+                </div>
+            </div>
+            
+            <div class="onboarding-text">
+                <h1 id="onboarding-title" class="fade-in-up">Hey! I'm Libby!</h1>
+                <p id="onboarding-desc" class="fade-in-up">Your friendly library assistant at University of Batangas Lipa Campus.</p>
+            </div>
+        </div>
+        
+        <div class="onboarding-bottom">
+            <button class="btn-primary btn-large btn-no-glow" onclick="nextSlide()" id="continue-btn">Continue</button>
+        </div>
+    </div>
+
+    <!-- Home Page -->
+    <div id="home-page" class="page">
+        <header class="page-header">
+            <button class="icon-btn" onclick="toggleMenu()">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+            <div class="header-buttons">
+            </div>
+            <button class="icon-btn relative">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+                <span class="notification-dot"></span>
+            </button>
+        </header>
+
+        <section class="welcome-section">
+            <div class="welcome-content fade-in-up">
+                <div id="home-mascot" class="mascot-wrapper mascot-sm">
+                    <svg viewBox="0 0 200 200" class="mascot-svg">
+                        <circle cx="100" cy="100" r="80" fill="hsl(51, 100%, 50%)" class="mascot-head"/>
+                        <g class="mascot-eye-left">
+                            <ellipse cx="70" cy="85" rx="15" ry="18" fill="white"/>
+                            <circle class="eye-pupil" cx="70" cy="85" r="8" fill="black"/>
+                            <circle class="eye-highlight" cx="67" cy="82" r="3" fill="white"/>
+                        </g>
+                        <g class="mascot-eye-right">
+                            <ellipse cx="130" cy="85" rx="15" ry="18" fill="white"/>
+                            <circle class="eye-pupil" cx="130" cy="85" r="8" fill="black"/>
+                            <circle class="eye-highlight" cx="127" cy="82" r="3" fill="white"/>
+                        </g>
+                        <path d="M 65 120 Q 100 150 135 120" stroke="black" stroke-width="4" fill="none" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="welcome-title">Hey, UBian!</h1>
+                    <p class="welcome-subtitle">How are you today? Let's have a chat!</p>
+                </div>
+            </div>
+            
+            <button class="btn-primary btn-new-chat" onclick="navigateTo('chat')">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                New Chat
+            </button>
+        </section>
+
+        <section class="features-section">
+            <div class="section-header">
+                <h2>Explore Features</h2>
+                <button class="link-btn">View All</button>
+            </div>
+            
+            <div class="features-grid">
+                <div class="feature-card fade-in-up" onclick="navigateTo('chat')" style="animation-delay: 200ms">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path>
+                        </svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3>Book Search</h3>
+                        <p>Ask Libby to help you find books from our library collection.</p>
+                    </div>
+                    <button class="feature-btn">Start Chat</button>
+                </div>
+                
+                <div class="feature-card fade-in-up" onclick="navigateTo('chat')" style="animation-delay: 300ms">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3>Library Hours</h3>
+                        <p>Check the library's operating hours and holiday schedules.</p>
+                    </div>
+                    <button class="feature-btn">Start Chat</button>
+                </div>
+                
+                <div class="feature-card fade-in-up" onclick="navigateTo('chat')" style="animation-delay: 400ms">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path>
+                        </svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3>Borrowing Rules</h3>
+                        <p>Learn about our borrowing policies and return guidelines.</p>
+                    </div>
+                    <button class="feature-btn">Start Chat</button>
+                </div>
+                
+                <div class="feature-card fade-in-up" onclick="navigateTo('chat')" style="animation-delay: 500ms">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3>Discussion Rooms</h3>
+                        <p>Ask about available discussion rooms, capacity, and schedules.</p>
+                    </div>
+                    <button class="feature-btn">Start Chat</button>
+                </div>
+            </div>
+        </section>
+
+        <button class="fab" onclick="navigateTo('chat')">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Chat Page -->
+    <div id="chat-page" class="page">
+        <header class="chat-header glass-card">
+            <button class="icon-btn" onclick="navigateTo('home')">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+            </button>
+            <h1>Chat with Libby</h1>
+            <button class="icon-btn">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="1"></circle>
+                    <circle cx="19" cy="12" r="1"></circle>
+                    <circle cx="5" cy="12" r="1"></circle>
+                </svg>
+            </button>
+        </header>
+
+        <div class="messages-container" id="messages-container">
+            <div class="message-wrapper">
+                <div class="mascot-wrapper mascot-xs">
+                    <svg viewBox="0 0 200 200" class="mascot-svg">
+                        <circle cx="100" cy="100" r="80" fill="hsl(51, 100%, 50%)" class="mascot-head"/>
+                        <g class="mascot-eye-left">
+                            <ellipse cx="70" cy="85" rx="15" ry="18" fill="white"/>
+                            <circle class="eye-pupil" cx="70" cy="85" r="8" fill="black"/>
+                            <circle class="eye-highlight" cx="67" cy="82" r="3" fill="white"/>
+                        </g>
+                        <g class="mascot-eye-right">
+                            <ellipse cx="130" cy="85" rx="15" ry="18" fill="white"/>
+                            <circle class="eye-pupil" cx="130" cy="85" r="8" fill="black"/>
+                            <circle class="eye-highlight" cx="127" cy="82" r="3" fill="white"/>
+                        </g>
+                        <path d="M 65 120 Q 100 150 135 120" stroke="black" stroke-width="4" fill="none" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div class="message-content">
+                    <div class="chat-bubble assistant">
+                        <p>Hello! I'm Libby, your UBLC Library assistant. How can I help you today?</p>
+                    </div>
+                    <span class="message-time">Today, 09:00 AM</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="quick-suggestions" class="quick-suggestions">
+            <button class="quick-suggestion-btn" onclick="sendQuickSuggestion('📚 Search for books')">📚 Search for books</button>
+            <button class="quick-suggestion-btn" onclick="sendQuickSuggestion('🕐 Library hours')">🕐 Library hours</button>
+            <button class="quick-suggestion-btn" onclick="sendQuickSuggestion('📖 Borrowing rules')">📖 Borrowing rules</button>
+            <button class="quick-suggestion-btn" onclick="sendQuickSuggestion('🚪 Discussion room info')">🚪 Discussion rooms</button>
+        </div>
+
+        <div id="stop-generating" class="stop-generating hidden">
+            <button class="stop-btn" onclick="stopGenerating()">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="6" y="6" width="12" height="12"></rect>
+                </svg>
+                Stop Generate
+            </button>
+        </div>
+
+        <div class="chat-input-container">
+            <form class="chat-input glass-card" onsubmit="handleSend(event)">
+                <button type="button" class="input-icon-btn">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                    </svg>
+                </button>
+                <input type="text" id="chat-input" placeholder="Ask me anything about the library..." autocomplete="off">
+                <button type="button" class="input-icon-btn">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="23"></line>
+                        <line x1="8" y1="23" x2="16" y2="23"></line>
+                    </svg>
+                </button>
+                <button type="submit" class="send-btn" id="send-btn">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Profile Page -->
+    <div id="profile-page" class="page">
+        <div class="profile-header">
+            <div class="profile-avatar">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+            </div>
+            <h1 id="profile-name" class="fade-in-up">Juan Dela Cruz</h1>
+            <p id="profile-year" class="fade-in-up">BSIT - 4th Year</p>
+            <p id="profile-id" class="profile-id fade-in-up">Student ID: 2220777</p>
+        </div>
+
+        <section class="profile-stats">
+            <div class="glass-card stats-card fade-in-up">
+                <div class="stat-item">
+                    <div class="stat-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path>
+                        </svg>
+                    </div>
+                    <p class="stat-value">0</p>
+                    <p class="stat-label">Books Borrowed</p>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                    </div>
+                    <p class="stat-value">0</p>
+                    <p class="stat-label">Due Returns</p>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                    </div>
+                    <p class="stat-value">0</p>
+                    <p class="stat-label">Reserved Books</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="profile-menu">
+            <div class="feature-card fade-in-up" style="animation-delay: 300ms">
+                <div class="menu-item-content">
+                    <h3>Borrowed Books</h3>
+                    <p>View your current loans</p>
+                </div>
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            </div>
+            <div class="feature-card fade-in-up" style="animation-delay: 500ms">
+                <div class="menu-item-content">
+                    <h3>Reading History</h3>
+                    <p>Books you've borrowed</p>
+                </div>
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            </div>
+            <div class="feature-card fade-in-up" style="animation-delay: 600ms">
+                <div class="menu-item-content">
+                    <h3>Favorites</h3>
+                    <p>Saved books and resources</p>
+                </div>
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            </div>
+        </section>
+
+        <div class="mascot-center">
+            <div id="profile-mascot" class="mascot-wrapper mascot-sm">
+                <svg viewBox="0 0 200 200" class="mascot-svg">
+                    <circle cx="100" cy="100" r="80" fill="hsl(51, 100%, 50%)" class="mascot-head"/>
+                    <g class="mascot-eye-left">
+                        <ellipse cx="70" cy="85" rx="15" ry="18" fill="white"/>
+                        <circle class="eye-pupil" cx="70" cy="85" r="8" fill="black"/>
+                        <circle class="eye-highlight" cx="67" cy="82" r="3" fill="white"/>
+                    </g>
+                    <g class="mascot-eye-right">
+                        <ellipse cx="130" cy="85" rx="15" ry="18" fill="white"/>
+                        <circle class="eye-pupil" cx="130" cy="85" r="8" fill="black"/>
+                        <circle class="eye-highlight" cx="127" cy="82" r="3" fill="white"/>
+                    </g>
+                    <path d="M 65 120 Q 100 150 135 120" stroke="black" stroke-width="4" fill="none" stroke-linecap="round"/>
+                </svg>
+            </div>
+        </div>
+
+        <section class="logout-section">
+            <button class="logout-btn glass-card" onclick="logoutUser()">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                <span>Sign Out</span>
+            </button>
+        </section>
+    </div>
+
+    <!-- Settings Page -->
+    <div id="settings-page" class="page">
+        <header class="page-header">
+            <h1>Settings</h1>
+        </header>
+
+        <section class="settings-section">
+            <h2 class="section-title">Preferences</h2>
+            <div class="glass-card settings-group">
+                <div class="settings-item fade-in-up">
+                    <div class="settings-item-left">
+                        <div class="settings-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
+                                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                            </svg>
+                        </div>
+                        <span>Notifications</span>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="settings-item fade-in-up" style="animation-delay: 100ms">
+                    <div class="settings-item-left">
+                        <div class="settings-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                            </svg>
+                        </div>
+                        <span>Dark Mode</span>
+                    </div>
+                        <label class="toggle-switch">
+                         <input type="checkbox" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="settings-item fade-in-up" style="animation-delay: 200ms">
+                    <div class="settings-item-left">
+                        <div class="settings-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="2" y1="12" x2="22" y2="12"></line>
+                                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                            </svg>
+                        </div>
+                        <span>Language</span>
+                    </div>
+                    <div class="settings-value">
+                        <span>English</span>
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="settings-section">
+            <h2 class="section-title">Support</h2>
+            <div class="glass-card settings-group">
+                <div class="settings-item fade-in-up">
+                    <div class="settings-item-left">
+                        <div class="settings-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
+                        </div>
+                        <span>Help Center</span>
+                    </div>
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </div>
+                <div class="settings-item fade-in-up" style="animation-delay: 100ms">
+                    <div class="settings-item-left">
+                        <div class="settings-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                            </svg>
+                        </div>
+                        <span>Privacy Policy</span>
+                    </div>
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </div>
+                <div class="settings-item fade-in-up" style="animation-delay: 200ms">
+                    <div class="settings-item-left">
+                        <div class="settings-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-1.2 2-2 2.5-.6.4-.5 1.3-.5 2"></path>
+                                <circle cx="12" cy="17" r="1"></circle>
+                            </svg>
+                        </div>
+                        <span>About UBLC Library</span>
+                    </div>
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <div class="app-version">
+            <p>UBLC Library Assistant</p>
+            <p>Version 1.0.0</p>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" onclick="navigateTo('home')">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            <span>Home</span>
+        </button>
+        <button class="nav-item" onclick="navigateTo('chat')">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span>Chat</span>
+        </button>
+        <button class="nav-item" onclick="navigateTo('profile')">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span>Profile</span>
+        </button>
+        <button class="nav-item" onclick="navigateTo('settings')">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            <span>Settings</span>
+        </button>
+    </nav>
+
+    <script src="script.js"></script>
+  </body>
+</html>
