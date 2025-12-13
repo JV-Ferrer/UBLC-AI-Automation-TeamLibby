@@ -240,10 +240,19 @@ function startFeatureChat(message) {
     // Wait for page to be active, then send the message
     setTimeout(() => {
         const input = document.getElementById('chat-input');
-        if (input) {
-            input.value = message;
-            // Trigger the send
-            sendMessage();
+        if (input && message.trim()) {
+            // Add user message
+            addMessage(message, true);
+            
+            // Hide quick suggestions
+            const quickSuggestions = document.getElementById('quick-suggestions');
+            if (quickSuggestions) {
+                quickSuggestions.style.display = 'none';
+            }
+            
+            // Show typing indicator and send to webhook
+            showTypingIndicator();
+            sendToWebhook(message);
         }
     }, 300);
 }
@@ -366,7 +375,15 @@ function addMessage(content, isUser) {
     bubble.className = `chat-bubble ${isUser ? 'user' : 'assistant'}`;
     
     const p = document.createElement('p');
-    p.textContent = content;
+    // Convert newlines to <br> tags and preserve formatting
+    if (!isUser) {
+        p.innerHTML = content
+            .replace(/\n\n/g, '<br><br>')  // Double newlines for paragraphs
+            .replace(/\n/g, '<br>');        // Single newlines for line breaks
+        p.style.whiteSpace = 'pre-wrap';    // Preserve spaces and wrapping
+    } else {
+        p.textContent = content;
+    }
     bubble.appendChild(p);
     
     messageContent.appendChild(bubble);
@@ -383,17 +400,17 @@ function addMessage(content, isUser) {
         // Only process for action buttons if it's about a single book
         if (!multipleBooks) {
             // Extract title - try multiple patterns
-            // Pattern 1: "Title: [Book Name]" format
-            let titleMatch = content.match(/Title:\s*([^\n-]+?)(?:\s*-\s*Author|by\s|ISBN|Availability)/i);
+            // Pattern 1: "Title: [Book Name]" format - be very strict to stop at next field
+            let titleMatch = content.match(/Title:\s*([^\n]+?)(?=\n|Author:|ISBN:|Location:|Availability:)/i);
             
             // Pattern 2: Quoted book title like "1984" or 'The Great Gatsby'
             if (!titleMatch) {
-                titleMatch = content.match(/["']([^"']+)["']\s+by\s+/i);
+                titleMatch = content.match(/["']([^"']{3,50})["']/i);
             }
             
-            // Pattern 3: "The book [title] by" or similar
+            // Pattern 3: "The book [title]" format
             if (!titleMatch) {
-                titleMatch = content.match(/\bbook\s+["']?([^"'\n]+?)["']?\s+by\s+/i);
+                titleMatch = content.match(/\bbook\s+"?([^"\n]{3,50})"?/i);
             }
             
             if (titleMatch) {
@@ -403,33 +420,40 @@ function addMessage(content, isUser) {
             }
             
             // Extract availability status with better pattern matching
-            // Priority 1: Look for "Availability: [Status]" format
-            let statusMatch = content.match(/Availability:\s*(Available|Borrowed|Reserved|Unavailable)/i);
+            // Priority 1: Look for "Availability: [Status]" format (case insensitive, flexible spacing)
+            let statusMatch = content.match(/Availability:\s*(Available|Borrowed|Reserved|Unavailable|Not\s*Available)/i);
             
             if (statusMatch) {
-                detectedStatus = statusMatch[1].toLowerCase();
+                const status = statusMatch[1].toLowerCase().replace(/\s+/g, '');
+                if (status === 'notavailable') {
+                    detectedStatus = 'unavailable';
+                } else {
+                    detectedStatus = status;
+                }
             } 
             // Priority 2: Look for status keywords in context
             else {
                 const lowerContent = content.toLowerCase();
                 
+                // Check for "available" status first (most specific)
+                if (/availability:\s*available/i.test(content) ||
+                    lowerContent.includes('currently available') || 
+                    lowerContent.includes('is available') ||
+                    lowerContent.includes('available to borrow')) {
+                    detectedStatus = 'available';
+                }
                 // Check for "borrowed" status
-                if (lowerContent.includes('currently borrowed') || 
+                else if (lowerContent.includes('currently borrowed') || 
                     lowerContent.includes('is borrowed') ||
                     lowerContent.includes('has been borrowed') ||
-                    /borrowed\s+and\s+not\s+available/i.test(content)) {
+                    /borrowed\s+and\s+not\s+available/i.test(content) ||
+                    /availability:\s*borrowed/i.test(content)) {
                     detectedStatus = 'borrowed';
-                }
-                // Check for "available" status
-                else if (lowerContent.includes('currently available') || 
-                         lowerContent.includes('is available') ||
-                         lowerContent.includes('available to borrow') ||
-                         /\bavailable\b.*\bborrow\b/i.test(content)) {
-                    detectedStatus = 'available';
                 }
                 // Check for "reserved" status
                 else if (lowerContent.includes('reserved') ||
-                         lowerContent.includes('on hold')) {
+                         lowerContent.includes('on hold') ||
+                         /availability:\s*reserved/i.test(content)) {
                     detectedStatus = 'reserved';
                 }
                 // Check for generic unavailable
@@ -776,22 +800,51 @@ function initializeNotifications(user) {
         .collection('users')
         .doc(user.uid)
         .collection('notifications')
-        .orderBy('createdAt', 'desc')
         .onSnapshot((snapshot) => {
+            console.log('Notifications snapshot:', snapshot.size, 'docs');
             notificationList.innerHTML = '';
             let unreadCount = 0;
             
             if (snapshot.empty) {
                 notificationList.innerHTML = '<p class="empty-message">No notifications yet</p>';
             } else {
+                // Sort manually by createdAt
+                const notifications = [];
                 snapshot.forEach((doc) => {
-                    const notification = doc.data();
+                    notifications.push({ id: doc.id, ...doc.data() });
+                });
+                
+                notifications.sort((a, b) => {
+                    const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+                    const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+                    return dateB - dateA; // Descending order
+                });
+                
+                notifications.forEach((notification) => {
+                    console.log('Notification:', notification);
                     if (!notification.read) unreadCount++;
                     
                     const item = document.createElement('div');
                     item.className = `notification-item ${notification.read ? '' : 'unread'}`;
-                    const timestamp = notification.createdAt ? 
-                        new Date(notification.createdAt.toDate()).toLocaleString() : 'Just now';
+                    
+                    // Handle different timestamp formats
+                    let timestamp = 'Just now';
+                    if (notification.createdAt) {
+                        try {
+                            if (notification.createdAt.toDate) {
+                                // Firestore Timestamp
+                                timestamp = new Date(notification.createdAt.toDate()).toLocaleString();
+                            } else if (typeof notification.createdAt === 'string') {
+                                // String timestamp
+                                timestamp = new Date(notification.createdAt).toLocaleString();
+                            } else if (typeof notification.createdAt === 'number') {
+                                // Unix timestamp
+                                timestamp = new Date(notification.createdAt).toLocaleString();
+                            }
+                        } catch (e) {
+                            console.error('Error parsing timestamp:', e);
+                        }
+                    }
                     
                     item.innerHTML = `
                         <strong>${notification.title || 'Notification'}</strong>
@@ -801,7 +854,7 @@ function initializeNotifications(user) {
                     
                     item.addEventListener('click', () => {
                         db.collection('users').doc(user.uid)
-                            .collection('notifications').doc(doc.id)
+                            .collection('notifications').doc(notification.id)
                             .update({ read: true });
                     });
                     
@@ -816,6 +869,8 @@ function initializeNotifications(user) {
             } else {
                 notificationBadge.style.display = 'none';
             }
+        }, (error) => {
+            console.error('Notification listener error:', error);
         });
 }
 
@@ -827,20 +882,34 @@ function addBookToInterests(bookTitle) {
     }
     
     const db = firebase.firestore();
-    db.collection('users').doc(user.uid)
-        .collection('interestedBooks').add({
-            title: bookTitle || 'Unknown Book',
-            createdAt: new Date(),
-            notified: false,
-            status: 'unavailable'
-        })
-        .then(() => {
-            alert('✅ You will be notified when this book becomes available!');
-        })
-        .catch(err => {
-            console.error('Error:', err);
-            alert('Failed to save interest. Please try again.');
-        });
+    
+    // Save to both old and new structure for compatibility
+    // New structure: top-level bookInterests collection for easy querying
+    db.collection('bookInterests').doc(`${bookTitle}_${user.uid}`).set({
+        bookTitle: bookTitle || 'Unknown Book',
+        userId: user.uid,
+        userEmail: user.email,
+        userName: user.displayName || 'Unknown',
+        createdAt: new Date(),
+        notified: false
+    })
+    .then(() => {
+        // Also save to user's subcollection for profile display
+        return db.collection('users').doc(user.uid)
+            .collection('interestedBooks').add({
+                bookTitle: bookTitle || 'Unknown Book',
+                createdAt: new Date(),
+                notified: false,
+                status: 'unavailable'
+            });
+    })
+    .then(() => {
+        alert('✅ You will be notified when this book becomes available!');
+    })
+    .catch(err => {
+        console.error('Error:', err);
+        alert('Failed to save interest. Please try again.');
+    });
 }
 
 function handleBorrowRequest(bookTitle, action) {
@@ -857,7 +926,10 @@ function handleBorrowRequest(bookTitle, action) {
         bookTitle: bookTitle,
         action: action,
         studentId: user.email,
+        studentEmail: user.email,
+        studentUid: user.uid,
         studentName: user.displayName || 'Unknown',
+        timestamp: new Date().toLocaleString(),
         requestedAt: new Date().toISOString(),
         status: 'pending'
     };
