@@ -1,0 +1,736 @@
+{
+  "name": "TeamLibby",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "aec495fe-e9bb-46f0-861b-4ef1d1a14beb",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -288,
+        -32
+      ],
+      "id": "5b42ca89-b6ec-4a5a-8b97-8c2f9e3bd8bf",
+      "name": "Webhook",
+      "webhookId": "aec495fe-e9bb-46f0-861b-4ef1d1a14beb"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3cfe5a1b-dfa1-47c9-a7d8-64322ea49e73",
+              "name": "response",
+              "value": "={{ $json.output[0].content[0].text.replaceAll('**', '').replaceAll('\\\\n', '\\n') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        576,
+        -32
+      ],
+      "id": "046b7a11-f2fd-470d-ac8f-9703b8cf59a3",
+      "name": "Normalize"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "documentId": {
+          "__rl": true,
+          "value": "1jSg5PszX-F4hmp7IIquq4MlCiKRaFcHFekmCwIo2lWk",
+          "mode": "list",
+          "cachedResultName": "Library Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1jSg5PszX-F4hmp7IIquq4MlCiKRaFcHFekmCwIo2lWk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Books",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1jSg5PszX-F4hmp7IIquq4MlCiKRaFcHFekmCwIo2lWk/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        240,
+        224
+      ],
+      "id": "345319ef-07d9-40bf-8376-23f16bafc444",
+      "name": "Books",
+      "credentials": {
+        "googleApi": {
+          "id": "nM2f7wigRRId5LFp",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "351878bf-5375-49e7-9330-b6f75368d4c6",
+              "name": "query",
+              "value": "={{ $json.body }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        64,
+        -32
+      ],
+      "id": "39fafe4c-8191-484e-a86d-dc41f15f59a1",
+      "name": "Set Query"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1jSg5PszX-F4hmp7IIquq4MlCiKRaFcHFekmCwIo2lWk",
+          "mode": "list",
+          "cachedResultName": "Library Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1jSg5PszX-F4hmp7IIquq4MlCiKRaFcHFekmCwIo2lWk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 450199283,
+          "mode": "list",
+          "cachedResultName": "Memory",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1jSg5PszX-F4hmp7IIquq4MlCiKRaFcHFekmCwIo2lWk/edit#gid=450199283"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{ $now }}",
+            "response_message": "={{ $json.response }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "response_message",
+              "displayName": "response_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        784,
+        -32
+      ],
+      "id": "5149523c-4ce1-4a5a-bc8d-87c2e394d2a4",
+      "name": "Memory",
+      "credentials": {
+        "googleApi": {
+          "id": "nM2f7wigRRId5LFp",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        784,
+        -288
+      ],
+      "id": "5c3bb3e8-66e5-4a1e-a61f-11faa6d638a0",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "get",
+        "documentURL": "1B1PdIQ1yKJ0Frbya0HJrlrxzhc2sJfaPHuPx2JeWBiQ"
+      },
+      "type": "n8n-nodes-base.googleDocsTool",
+      "typeVersion": 2,
+      "position": [
+        560,
+        224
+      ],
+      "id": "1d17df0a-23cc-4c50-9904-2e7ce99a0e1a",
+      "name": "Borrowing",
+      "credentials": {
+        "googleApi": {
+          "id": "ySvVEJVMbkhZkBH1",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "get",
+        "documentURL": "13IKqzoUiyllnznTIwVbCMz8U3TgTyGdUJbGszJrImIU"
+      },
+      "type": "n8n-nodes-base.googleDocsTool",
+      "typeVersion": 2,
+      "position": [
+        400,
+        224
+      ],
+      "id": "759c7de8-4e9d-4874-b5c2-22250f6ee675",
+      "name": "Library Rules",
+      "credentials": {
+        "googleApi": {
+          "id": "ySvVEJVMbkhZkBH1",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -464,
+        512
+      ],
+      "id": "27e59f7a-0efb-4fe3-be7f-8f6a65863b63",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all()\n  .filter(item => {\n    const book = item.json || item;\n    const availability = book.Availability || book.availability || '';\n    return availability.toLowerCase() === 'available';\n  })\n  .map(item => {\n    const book = item.json || item;\n    const bookTitle = book['Book Title'] || book.title;\n    return {\n      bookTitle: bookTitle,\n      availability: book.Availability || book.availability,\n      isAvailable: true,\n      message: bookTitle + ' is now available!'\n    };\n  });"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -64,
+        512
+      ],
+      "id": "9ab93ec6-2cf8-48cb-9eef-86ba38787177",
+      "name": "Code in JavaScript",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "create",
+        "projectId": "chatlibby-b9310",
+        "collection": "={{\"users/\" + $json.userId + \"/notifications\"}}",
+        "columns": "title, message, bookTitle, createdAt"
+      },
+      "type": "n8n-nodes-base.googleFirebaseCloudFirestore",
+      "typeVersion": 1.1,
+      "position": [
+        640,
+        720
+      ],
+      "id": "bf4873e4-c96f-4d32-9051-c9c466cbb3c0",
+      "name": "Create a document",
+      "credentials": {
+        "googleApi": {
+          "id": "hkK2dBDPdikXaAvw",
+          "name": "Google Firebase Cloud Firestore account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "documentId": {
+          "__rl": true,
+          "value": "1jSg5PszX-F4hmp7IIquq4MlCiKRaFcHFekmCwIo2lWk",
+          "mode": "list",
+          "cachedResultName": "Library Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1jSg5PszX-F4hmp7IIquq4MlCiKRaFcHFekmCwIo2lWk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Books",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1jSg5PszX-F4hmp7IIquq4MlCiKRaFcHFekmCwIo2lWk/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -240,
+        512
+      ],
+      "id": "85c3899d-ef0f-46bb-a82c-3d11f57f8588",
+      "name": "Availability",
+      "credentials": {
+        "googleApi": {
+          "id": "nM2f7wigRRId5LFp",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f2efc6b7-50b1-40c1-b033-b6c35d2a3490",
+              "leftValue": "={{ $json.body.type }}",
+              "rightValue": "BORROW_REQUEST",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -112,
+        -272
+      ],
+      "id": "8de79d7e-80e9-4086-99c6-a20bf0d33f24",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsCode": "const requestData = $input.item.json.body.data;\n\nconst html = `\n<div style=\"font-family: Arial, sans-serif; padding: 20px; background-color: #f5f5f5;\">\n  <div style=\"background-color: white; padding: 20px; border-radius: 8px; max-width: 600px;\">\n    <h2 style=\"color: #1a73e8;\">📚 New Library Request</h2>\n    \n    <h3>Book Details:</h3>\n    <p><strong>Title:</strong> ${requestData.bookTitle}</p>\n    <p><strong>Action:</strong> ${requestData.action === 'available' ? 'BORROW' : 'RESERVE'}</p>\n    \n    <h3>Student Information:</h3>\n    <p><strong>Name:</strong> ${requestData.studentName}</p>\n    <p><strong>Email:</strong> ${requestData.studentEmail}</p>\n    <p><strong>Student ID:</strong> ${requestData.studentId}</p>\n    \n    <p style=\"margin-top: 20px; padding: 10px; background-color: #e8f0fe; border-radius: 4px;\">\n      <strong>Timestamp:</strong> ${requestData.timestamp}\n    </p>\n  </div>\n</div>\n`;\n\nreturn [{\n  json: {\n    to: 'roxasejay08@gmail.com',\n    subject: `${requestData.action === 'available' ? 'BORROW' : 'RESERVE'} REQUEST: ${requestData.bookTitle}`,\n    html: html\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        -288
+      ],
+      "id": "9cca9422-9c02-4742-b7f5-7e02ce82a166",
+      "name": "JS"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    title: \"Book Available\",\n    message: `${$input.item.json.bookTitle} is now available!`,\n    bookTitle: $input.item.json.bookTitle,\n    createdAt: new Date().toISOString(),\n    userId: $input.item.json.userId  // ADD THIS LINE\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        512
+      ],
+      "id": "98bbe43d-bf4a-41fb-bb55-1cd9e601fbed",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "batchSize": 10,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        400,
+        496
+      ],
+      "id": "5235c504-0b4f-450f-96cc-bef23d094f8d",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "batchSize": 10,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        144,
+        512
+      ],
+      "id": "152c5248-e58c-4df4-9e96-c728a81adbcf",
+      "name": "Loop",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "query",
+        "projectId": "chatlibby-b9310",
+        "query": "={\n  \"structuredQuery\": {\n    \"where\": {\n      \"fieldFilter\": {\n        \"field\": {\"fieldPath\": \"bookTitle\"},\n        \"op\": \"EQUAL\",\n        \"value\": {\"stringValue\": \"{{ $json.bookTitle }}\"}\n      }\n    },\n    \"from\": [{\"collectionId\": \"bookInterests\"}]\n  }\n}"
+      },
+      "type": "n8n-nodes-base.googleFirebaseCloudFirestore",
+      "typeVersion": 1.1,
+      "position": [
+        160,
+        736
+      ],
+      "id": "ee3f7a09-9add-45d2-af56-b6a4b1bbed03",
+      "name": "Query a document",
+      "alwaysOutputData": false,
+      "credentials": {
+        "googleApi": {
+          "id": "hkK2dBDPdikXaAvw",
+          "name": "Google Firebase Cloud Firestore account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-3.5-turbo",
+          "mode": "list",
+          "cachedResultName": "GPT-3.5-TURBO"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "={{ $json.query }}"
+            },
+            {
+              "role": "system",
+              "content": "## Core Instructions\nYou are the UBLC (University of Batangas Lipa Campus) Library Assistant chatbot, Libby. You help students find books, understand borrowing rules, and manage their library interactions.\n\nWhen a user says they want to borrow, reserve, or find a SPECIFIC book by name:\n1. Search the Books sheet for that EXACT book title\n2. Return ONLY that one book's details\n3. Include: Title, Author, ISBN, Location, Availability\n4. Do NOT list multiple books unless the user asks for a list\n\nWhen a user asks for \"books\" or \"available books\" in general:\n- Then you can show multiple results\n\n## Response Format Rules\n\n### CRITICAL: Always Use This Structure for Book Information\n\nWhen providing information about a **SINGLE BOOK**, you MUST format your response like this:\n\n```\n[Your friendly message here]\n\nTitle: [Exact Book Title]\nAuthor: [Author Name]\nISBN: [ISBN Number]\nLocation: [Shelf Location]\nAvailability: [Available|Borrowed|Reserved|Unavailable]\n\n[Additional instructions based on availability]\n```\n\n### Availability Status Rules\n\n**If book status is \"Available\":**\n```\nAvailability: Available\n\nTo borrow, bring your UBLC student ID and the book to the library main desk. Staff will assist you with the checkout, and you will get a receipt with your due date.\n```\n\n**If book status is \"Borrowed\":**\n```\nAvailability: Borrowed\n\nThis book is currently borrowed and not available right now. You can request a renewal twice if the book is not on hold. For now, you might want to wait until it is returned, or you can ask the library staff if they can notify you when it becomes available.\n```\n\n**If book status is \"Reserved\":**\n```\nAvailability: Reserved\n\nThis book is currently reserved by another patron. You can add yourself to the waitlist by speaking with library staff at the main desk.\n```\n\n**If book status is \"Unavailable\":**\n```\nAvailability: Unavailable\n\nThis book is not currently available. Please check with the library staff for more information or ask me about similar titles.\n```\n\n### Multiple Books Format\n\nWhen showing **MULTIPLE BOOKS** (search results or recommendations), use this format:\n\n```\nI found [number] books matching your search:\n\n1. Title: [Book 1 Title]\n   Author: [Author]\n   Location: [Shelf]\n   Availability: [Status]\n\n2. Title: [Book 2 Title]\n   Author: [Author]\n   Location: [Shelf]\n   Availability: [Status]\n\nWould you like to know more about any specific book?\n```\n\n## Data Sources\n\nYou have access to the following information sources:\n- **Book Catalog**: Google Sheets with current book inventory and availability\n- **Borrowing Rules**: Google Docs with complete borrowing policies and procedures\n- **Library Rules**: Google Docs with library regulations and guidelines\n\nWhen users ask about borrowing procedures, rules, or policies, reference the connected documents. Always provide accurate, up-to-date information from these sources.\n\n## Important Behaviors\n\n1. **Always** use the exact format above when discussing book availability\n2. **Never** make up book information - only use data from your Google Sheets source\n3. **Always** include the \"Availability:\" field with one of the four status values\n4. **Be conversational** but maintain the structured format for book details\n5. **Guide users** to the appropriate action based on book status\n6. When a user expresses interest in borrowing:\n   - For Available books: Explain the borrow process\n   - For Borrowed books: Suggest reserving or waiting\n   - For Reserved books: Explain the waitlist\n   - For Unavailable books: Suggest alternatives\n\n## Example Conversations\n\n**User:** \"I would like to borrow 1984\"\n\n**You:** \"The book '1984' by George Orwell (ISBN: 978-0451524935) is currently borrowed and not available right now.\n\nTitle: 1984\nAuthor: George Orwell\nISBN: 978-0451524935\nLocation: Shelf A1\nAvailability: Borrowed\n\nThis book is currently borrowed and not available right now. [Reference your borrowing rules document] You can request a renewal twice if the book is not on hold. For now, you might want to wait until '1984' is returned or you can ask the library staff if they can notify you when it becomes available. If you have further questions or want to know about other available books, just let me know!\"\n\n---\n\n**User:** \"I would like to borrow Gatsby\"\n\n**You:** \"Great news! 'The Great Gatsby' by F. Scott Fitzgerald is currently available.\n\nTitle: The Great Gatsby\nAuthor: F. Scott Fitzgerald\nISBN: 978-0743273565\nLocation: Shelf A1\nAvailability: Available\n\nTo borrow, bring your UBLC student ID and the book to the library main desk. Staff will assist you with the checkout, and you will get a receipt with your due date. [Reference borrowing rules from your document for details on loan periods and limits]. If you need more help with borrowing or other titles, just let me know!\"\n\n## N8N Workflow Configuration\n\nIn your N8N workflow:\n\n1. **HTTP Request Node** or **Google Sheets Node**: Fetch book data\n2. **Code Node**: Process the data and format according to the above rules\n3. **OpenAI/Claude Node**: Use this prompt as the system message\n4. **Important**: Make sure your sheet data includes these columns:\n   - Title\n   - Author\n   - ISBN\n   - Location/Shelf\n   - Availability (with values: Available, Borrowed, Reserved, or Unavailable)\n\n## Testing Checklist\n\n✅ Single book query shows structured format with \"Availability:\" field\n✅ Available books include borrow instructions\n✅ Borrowed books include reserve/wait information\n✅ Reserved books include waitlist information\n✅ Unavailable books include alternatives suggestion\n✅ Multiple book results use numbered list format\n✅ Borrowing rules are mentioned when relevant\n✅ Student ID requirement is always mentioned for borrowing\n\n"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        256,
+        -32
+      ],
+      "id": "cf567d59-ca07-4ec0-8eb9-7a12a1a0cb0d",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "6fM5uUVJ4HtYY2PY",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "roxasejay08@gmail.com",
+        "subject": "={{ $json.request }}",
+        "message": "=={{ $json.html }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        528,
+        -288
+      ],
+      "id": "7ba56a1d-2277-40b0-95e7-e28b66836fee",
+      "name": "REQUESTS HANDLER",
+      "webhookId": "6218d4a2-7b61-48e3-86de-f6dc00472de1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "aCSsw6mYfbfTZ77D",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Set Query",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Memory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Books": {
+      "ai_tool": [
+        [
+          {
+            "node": "Message a model",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Query": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memory": {
+      "main": [
+        []
+      ]
+    },
+    "Respond to Webhook": {
+      "main": [
+        []
+      ]
+    },
+    "Borrowing": {
+      "ai_tool": [
+        [
+          {
+            "node": "Message a model",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Library Rules": {
+      "ai_tool": [
+        [
+          {
+            "node": "Message a model",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Availability",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a document": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Availability": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "JS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JS": {
+      "main": [
+        [
+          {
+            "node": "REQUESTS HANDLER",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Create a document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Query a document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query a document": {
+      "main": [
+        [
+          {
+            "node": "Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Normalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "REQUESTS HANDLER": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "989799d5-5efb-4d04-97bc-f8508e63e733",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "24cded0926941dfd744bd33b805a0fbba09424fd81b2843807e5ab7c99808f93"
+  },
+  "id": "mZHEfuaqhO8kcfRV",
+  "tags": []
+}
