@@ -3,18 +3,11 @@ let currentPage = 'onboarding';
 let currentSlide = 0;
 let progress = 0;
 let progressInterval = null;
-let messages = [
-    {
-        id: '1',
-        content: "Hello! I'm Libby, your UBLC Library assistant. How can I help you today?",
-        isUser: false,
-        timestamp: 'Today, 09:00 AM'
-    }
-];
+let messages = [];
 let isTyping = false;
 let isGenerating = false;
 let eyePositions = {};
-
+let notificationUnsubscribe = null;
 // Onboarding Slides
 const slides = [
     {
@@ -39,6 +32,26 @@ document.addEventListener('DOMContentLoaded', () => {
     checkOnboardingStatus();
     updateBottomNav();
     hydrateUserProfile();
+        // Firebase is initialized in index.html; ensure auth state is observed
+        if (window.firebase && firebase.auth) {
+            firebase.auth().onAuthStateChanged((user) => {
+                hydrateUserProfile(user);
+                if (!user) {
+                    // Always gate behind auth: send unauthenticated users to auth.html
+                    window.location.href = 'auth.html';
+                    return;
+                }
+                // Initialize notifications for authenticated user
+                initializeNotifications(user);
+                // Authenticated: show onboarding only if not completed
+                const completed = localStorage.getItem('onboardingCompleted') === 'true';
+                if (!completed) {
+                    navigateTo && navigateTo('onboarding');
+                } else {
+                    navigateTo && navigateTo('home');
+                }
+            });
+        }
 });
 
 // Check if user has completed onboarding
@@ -219,6 +232,31 @@ function navigateTo(page) {
     }
 }
 
+// Start chat from feature card with automatic message
+function startFeatureChat(message) {
+    // Navigate to chat page
+    navigateTo('chat');
+    
+    // Wait for page to be active, then send the message
+    setTimeout(() => {
+        const input = document.getElementById('chat-input');
+        if (input && message.trim()) {
+            // Add user message
+            addMessage(message, true);
+            
+            // Hide quick suggestions
+            const quickSuggestions = document.getElementById('quick-suggestions');
+            if (quickSuggestions) {
+                quickSuggestions.style.display = 'none';
+            }
+            
+            // Show typing indicator and send to webhook
+            showTypingIndicator();
+            sendToWebhook(message);
+        }
+    }, 300);
+}
+
 // Hide/show bottom nav based on current page
 function updateBottomNav() {
     const bottomNav = document.querySelector('.bottom-nav');
@@ -264,12 +302,40 @@ function handleSend(event) {
     // Show typing indicator
     showTypingIndicator();
     
-    // Generate response
-    setTimeout(() => {
+    // Send message to webhook
+    sendToWebhook(message);
+}
+
+async function sendToWebhook(message) {
+    const webhookUrl = 'https://roxasejay08.app.n8n.cloud/webhook/aec495fe-e9bb-46f0-861b-4ef1d1a14beb';
+    
+    try {
+        const response = await fetch(webhookUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                message: message
+            })
+        });
+        
+        const data = await response.json();
         hideTypingIndicator();
-        const response = generateResponse(message);
-        addMessage(response, false);
-    }, 1500);
+        
+        // Use the response from webhook, fallback to a generic error if unavailable
+        let assistantResponse = data.response || data.message || "Sorry, I couldn't get a response right now. Please try again.";
+        
+        // Convert escaped newlines to actual newlines
+        assistantResponse = assistantResponse.replace(/\\n/g, '\n');
+        
+        addMessage(assistantResponse, false);
+    } catch (error) {
+        console.error('Error sending message to webhook:', error);
+        hideTypingIndicator();
+        // Fallback to a generic error if webhook fails
+        addMessage("Sorry, I couldn't get a response right now. Please try again.", false);
+    }
 }
 
 function addMessage(content, isUser) {
@@ -309,12 +375,103 @@ function addMessage(content, isUser) {
     bubble.className = `chat-bubble ${isUser ? 'user' : 'assistant'}`;
     
     const p = document.createElement('p');
-    p.textContent = content;
+    // Convert newlines to <br> tags and preserve formatting
+    if (!isUser) {
+        p.innerHTML = content
+            .replace(/\n\n/g, '<br><br>')  // Double newlines for paragraphs
+            .replace(/\n/g, '<br>');        // Single newlines for line breaks
+        p.style.whiteSpace = 'pre-wrap';    // Preserve spaces and wrapping
+    } else {
+        p.textContent = content;
+    }
     bubble.appendChild(p);
     
     messageContent.appendChild(bubble);
     
     if (!isUser) {
+        // Extract book title and its availability status together
+        let detectedStatus = null;
+        let bookTitle = null;
+        
+        // Count how many books are mentioned (for lists, don't show buttons)
+        const bookCount = (content.match(/Title:/g) || []).length;
+        const multipleBooks = bookCount > 1;
+        
+        // Only process for action buttons if it's about a single book
+        if (!multipleBooks) {
+            // Extract title - try multiple patterns
+            // Pattern 1: "Title: [Book Name]" format - be very strict to stop at next field
+            let titleMatch = content.match(/Title:\s*([^\n]+?)(?=\n|Author:|ISBN:|Location:|Availability:)/i);
+            
+            // Pattern 2: Quoted book title like "1984" or 'The Great Gatsby'
+            if (!titleMatch) {
+                titleMatch = content.match(/["']([^"']{3,50})["']/i);
+            }
+            
+            // Pattern 3: "The book [title]" format
+            if (!titleMatch) {
+                titleMatch = content.match(/\bbook\s+"?([^"\n]{3,50})"?/i);
+            }
+            
+            if (titleMatch) {
+                bookTitle = titleMatch[1].trim();
+                bookTitle = bookTitle.replace(/[*\-\s]+$/, '').trim();
+                bookTitle = bookTitle.replace(/^the\s+/i, 'The '); // Normalize "the"
+            }
+            
+            // Extract availability status with better pattern matching
+            // Priority 1: Look for "Availability: [Status]" format (case insensitive, flexible spacing)
+            let statusMatch = content.match(/Availability:\s*(Available|Borrowed|Reserved|Unavailable|Not\s*Available)/i);
+            
+            if (statusMatch) {
+                const status = statusMatch[1].toLowerCase().replace(/\s+/g, '');
+                if (status === 'notavailable') {
+                    detectedStatus = 'unavailable';
+                } else {
+                    detectedStatus = status;
+                }
+            } 
+            // Priority 2: Look for status keywords in context
+            else {
+                const lowerContent = content.toLowerCase();
+                
+                // Check for "available" status first (most specific)
+                if (/availability:\s*available/i.test(content) ||
+                    lowerContent.includes('currently available') || 
+                    lowerContent.includes('is available') ||
+                    lowerContent.includes('available to borrow')) {
+                    detectedStatus = 'available';
+                }
+                // Check for "borrowed" status
+                else if (lowerContent.includes('currently borrowed') || 
+                    lowerContent.includes('is borrowed') ||
+                    lowerContent.includes('has been borrowed') ||
+                    /borrowed\s+and\s+not\s+available/i.test(content) ||
+                    /availability:\s*borrowed/i.test(content)) {
+                    detectedStatus = 'borrowed';
+                }
+                // Check for "reserved" status
+                else if (lowerContent.includes('reserved') ||
+                         lowerContent.includes('on hold') ||
+                         /availability:\s*reserved/i.test(content)) {
+                    detectedStatus = 'reserved';
+                }
+                // Check for generic unavailable
+                else if (lowerContent.includes('not available') ||
+                         lowerContent.includes('unavailable')) {
+                    detectedStatus = 'unavailable';
+                }
+            }
+            
+            // Debug logging
+            console.log('Button Detection Debug:', {
+                multipleBooks,
+                bookTitle,
+                detectedStatus,
+                contentPreview: content.substring(0, 200)
+            });
+        }
+        
         const actions = document.createElement('div');
         actions.className = 'message-actions';
         actions.innerHTML = `
@@ -343,6 +500,59 @@ function addMessage(content, isUser) {
                 </svg>
             </button>
         `;
+        
+        // Add action buttons based on status (only for single book discussions)
+        if (bookTitle && detectedStatus && !multipleBooks) {
+            if (detectedStatus === 'available') {
+                // Available - show Borrow button
+                const borrowBtn = document.createElement('button');
+                borrowBtn.className = 'message-action-btn borrow-btn';
+                borrowBtn.title = 'Borrow this book';
+                borrowBtn.innerHTML = `
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                    </svg>
+                `;
+                borrowBtn.addEventListener('click', () => {
+                    handleBorrowRequest(bookTitle, 'available');
+                });
+                actions.appendChild(borrowBtn);
+            } else if (detectedStatus === 'borrowed') {
+                // Borrowed - show Reserve button
+                const reserveBtn = document.createElement('button');
+                reserveBtn.className = 'message-action-btn reserve-btn';
+                reserveBtn.title = 'Reserve this book';
+                reserveBtn.innerHTML = `
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                `;
+                reserveBtn.addEventListener('click', () => {
+                    handleBorrowRequest(bookTitle, 'reserved');
+                });
+                actions.appendChild(reserveBtn);
+            } else if (detectedStatus === 'unavailable') {
+                // Unavailable - show Notify Me button
+                const notifyBtn = document.createElement('button');
+                notifyBtn.className = 'message-action-btn notify-btn';
+                notifyBtn.title = 'Notify me when available';
+                notifyBtn.innerHTML = `
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                `;
+                notifyBtn.addEventListener('click', () => {
+                    addBookToInterests(bookTitle);
+                });
+                actions.appendChild(notifyBtn);
+            }
+        }
+        
         messageContent.appendChild(actions);
     }
     
@@ -474,46 +684,429 @@ function toggleMenu() {
     console.log('Menu toggled');
 }
 
-// User auth helpers shared with index.html
-function getUsers() {
-    return JSON.parse(localStorage.getItem('users') || '{}');
-}
-
-function saveUsers(users) {
-    localStorage.setItem('users', JSON.stringify(users));
-}
-
+// Firebase Auth helpers
 function getCurrentUser() {
-    const currentId = localStorage.getItem('currentUserId');
-    const users = getUsers();
-    if (currentId && users[currentId]) {
-        return { id: currentId, ...users[currentId] };
-    }
-    return null;
+    return firebase && firebase.auth ? firebase.auth().currentUser : null;
 }
 
-function hydrateUserProfile() {
-    const user = getCurrentUser();
+function hydrateUserProfile(userParam) {
+    const user = userParam || getCurrentUser();
     const nameEl = document.getElementById('profile-name');
     const yearEl = document.getElementById('profile-year');
     const idEl = document.getElementById('profile-id');
     const welcomeEl = document.querySelector('.welcome-title');
 
     if (user) {
-        if (nameEl) nameEl.textContent = user.fullName || 'Welcome, Scholar';
-        if (yearEl) yearEl.textContent = user.yearLevel || '';
-        if (idEl) idEl.textContent = `Student ID: ${user.studentNumber || ''}`;
-        if (welcomeEl) welcomeEl.textContent = `Hey, ${user.fullName?.split(' ')[0] || 'Scholar'}!`;
+        // Firebase Auth user fields
+        const displayName = user.displayName || 'Welcome, Scholar';
+        const email = user.email || '';
+        if (nameEl) nameEl.textContent = displayName;
+        if (yearEl) yearEl.textContent = email ? email : '';
+        if (idEl) idEl.textContent = email ? `Email: ${email}` : '';
+        if (welcomeEl) welcomeEl.textContent = `Hey, ${displayName.split(' ')[0]}!`;
+        
+        // Load user's borrowing data from Firestore
+        loadUserBorrowingData(user);
     } else {
-        if (nameEl) nameEl.textContent = 'Juan Dela Cruz';
-        if (yearEl) yearEl.textContent = 'BSIT - 4th Year';
-        if (idEl) idEl.textContent = 'Student ID: 2220777';
-        if (welcomeEl) welcomeEl.textContent = 'Hey, UBian!';
+        if (nameEl) nameEl.textContent = 'Not signed in';
+        if (yearEl) yearEl.textContent = '';
+        if (idEl) idEl.textContent = '';
+        if (welcomeEl) welcomeEl.textContent = 'Welcome!';
     }
 }
 
-function logoutUser() {
-    localStorage.removeItem('currentUserId');
-    window.location.href = 'auth.html';
+function loadUserBorrowingData(user) {
+    if (!user || !firebase.firestore) return;
+    
+    const db = firebase.firestore();
+    const borrowedCountEl = document.getElementById('borrowed-count');
+    const reservedCountEl = document.getElementById('reserved-count');
+    const dueReturnsCountEl = document.getElementById('due-returns-count');
+    
+    // Fetch borrow requests
+    db.collection('users').doc(user.uid)
+        .collection('borrowRequests')
+        .where('status', '==', 'pending')
+        .get()
+        .then((snapshot) => {
+            let borrowedCount = 0;
+            let reservedCount = 0;
+            
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                if (data.action === 'available') {
+                    borrowedCount++;
+                } else if (data.action === 'reserved') {
+                    reservedCount++;
+                }
+            });
+            
+            if (borrowedCountEl) borrowedCountEl.textContent = borrowedCount;
+            if (reservedCountEl) reservedCountEl.textContent = reservedCount;
+            
+            // For now, due returns = borrowed books (can be enhanced with due date logic)
+            if (dueReturnsCountEl) dueReturnsCountEl.textContent = borrowedCount;
+        })
+        .catch(err => {
+            console.error('Error loading borrowing data:', err);
+        });
 }
 
+function logoutUser() {
+    if (firebase && firebase.auth) {
+        firebase.auth().signOut().then(() => {
+            window.location.href = 'auth.html';
+        });
+    } else {
+        window.location.href = 'auth.html';
+    }
+}
+
+// Notification System
+function initializeNotifications(user) {
+    if (!user || !firebase.firestore) return;
+    
+    const db = firebase.firestore();
+    const notificationBell = document.getElementById('notificationBell');
+    const notificationPanel = document.getElementById('notificationPanel');
+    const notificationList = document.getElementById('notificationList');
+    const notificationBadge = document.getElementById('notificationBadge');
+    const clearBtn = document.getElementById('clearNotifications');
+    
+    // Toggle notification panel
+    if (notificationBell) {
+        notificationBell.addEventListener('click', () => {
+            notificationPanel.style.display = 
+                notificationPanel.style.display === 'none' ? 'block' : 'none';
+        });
+    }
+    
+    // Clear all notifications
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            db.collection('users').doc(user.uid)
+                .collection('notifications')
+                .get()
+                .then((snapshot) => {
+                    snapshot.forEach((doc) => doc.ref.delete());
+                });
+        });
+    }
+    
+    // Listen to notifications in real-time
+    if (notificationUnsubscribe) notificationUnsubscribe();
+    
+    notificationUnsubscribe = db
+        .collection('users')
+        .doc(user.uid)
+        .collection('notifications')
+        .onSnapshot((snapshot) => {
+            console.log('Notifications snapshot:', snapshot.size, 'docs');
+            notificationList.innerHTML = '';
+            let unreadCount = 0;
+            
+            if (snapshot.empty) {
+                notificationList.innerHTML = '<p class="empty-message">No notifications yet</p>';
+            } else {
+                // Sort manually by createdAt
+                const notifications = [];
+                snapshot.forEach((doc) => {
+                    notifications.push({ id: doc.id, ...doc.data() });
+                });
+                
+                notifications.sort((a, b) => {
+                    const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+                    const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+                    return dateB - dateA; // Descending order
+                });
+                
+                notifications.forEach((notification) => {
+                    console.log('Notification:', notification);
+                    if (!notification.read) unreadCount++;
+                    
+                    const item = document.createElement('div');
+                    item.className = `notification-item ${notification.read ? '' : 'unread'}`;
+                    
+                    // Handle different timestamp formats
+                    let timestamp = 'Just now';
+                    if (notification.createdAt) {
+                        try {
+                            if (notification.createdAt.toDate) {
+                                // Firestore Timestamp
+                                timestamp = new Date(notification.createdAt.toDate()).toLocaleString();
+                            } else if (typeof notification.createdAt === 'string') {
+                                // String timestamp
+                                timestamp = new Date(notification.createdAt).toLocaleString();
+                            } else if (typeof notification.createdAt === 'number') {
+                                // Unix timestamp
+                                timestamp = new Date(notification.createdAt).toLocaleString();
+                            }
+                        } catch (e) {
+                            console.error('Error parsing timestamp:', e);
+                        }
+                    }
+                    
+                    item.innerHTML = `
+                        <strong>${notification.title || 'Notification'}</strong>
+                        <p>${notification.message || ''}</p>
+                        <small>${timestamp}</small>
+                    `;
+                    
+                    item.addEventListener('click', () => {
+                        db.collection('users').doc(user.uid)
+                            .collection('notifications').doc(notification.id)
+                            .update({ read: true });
+                    });
+                    
+                    notificationList.appendChild(item);
+                });
+            }
+            
+            // Update badge
+            if (unreadCount > 0) {
+                notificationBadge.style.display = 'block';
+                notificationBadge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+            } else {
+                notificationBadge.style.display = 'none';
+            }
+        }, (error) => {
+            console.error('Notification listener error:', error);
+        });
+}
+
+function addBookToInterests(bookTitle) {
+    const user = firebase.auth().currentUser;
+    if (!user) {
+        alert('Please log in to enable notifications');
+        return;
+    }
+    
+    const db = firebase.firestore();
+    
+    // Save to both old and new structure for compatibility
+    // New structure: top-level bookInterests collection for easy querying
+    db.collection('bookInterests').doc(`${bookTitle}_${user.uid}`).set({
+        bookTitle: bookTitle || 'Unknown Book',
+        userId: user.uid,
+        userEmail: user.email,
+        userName: user.displayName || 'Unknown',
+        createdAt: new Date(),
+        notified: false
+    })
+    .then(() => {
+        // Also save to user's subcollection for profile display
+        return db.collection('users').doc(user.uid)
+            .collection('interestedBooks').add({
+                bookTitle: bookTitle || 'Unknown Book',
+                createdAt: new Date(),
+                notified: false,
+                status: 'unavailable'
+            });
+    })
+    .then(() => {
+        alert('✅ You will be notified when this book becomes available!');
+    })
+    .catch(err => {
+        console.error('Error:', err);
+        alert('Failed to save interest. Please try again.');
+    });
+}
+
+function handleBorrowRequest(bookTitle, action) {
+    const user = firebase.auth().currentUser;
+    if (!user) {
+        alert('Please log in to borrow books');
+        return;
+    }
+    
+    const db = firebase.firestore();
+    const webhookUrl = 'https://roxasejay08.app.n8n.cloud/webhook/aec495fe-e9bb-46f0-861b-4ef1d1a14beb';
+    
+    const requestData = {
+        bookTitle: bookTitle,
+        action: action,
+        studentId: user.email,
+        studentEmail: user.email,
+        studentUid: user.uid,
+        studentName: user.displayName || 'Unknown',
+        timestamp: new Date().toLocaleString(),
+        requestedAt: new Date().toISOString(),
+        status: 'pending'
+    };
+    
+    // Save borrow request to Firestore
+    db.collection('users').doc(user.uid)
+        .collection('borrowRequests').add({
+            ...requestData,
+            requestedAt: new Date()
+        })
+        .then(() => {
+            // Send notification to webhook for admin email
+            return fetch(webhookUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    type: 'BORROW_REQUEST',
+                    data: requestData
+                })
+            });
+        })
+        .then(() => {
+            if (action === 'available') {
+                alert('✅ Borrow request sent! Please collect the book at the library counter with your student ID.');
+            } else if (action === 'reserved') {
+                alert('✅ Reservation request sent! You will be notified when the book is available.');
+            }
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            alert('Failed to send request. Please try again.');
+        });
+}
+
+// Show book list modal
+function showBookList(type) {
+    const user = firebase.auth().currentUser;
+    if (!user) {
+        alert('Please log in to view your books');
+        return;
+    }
+    
+    const modal = document.getElementById('bookListModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBookList = document.getElementById('modalBookList');
+    
+    // Set title based on type
+    const titles = {
+        'borrowed': 'Borrowed Books',
+        'history': 'My Requests',
+        'favorites': 'Favorite Books'
+    };
+    modalTitle.textContent = titles[type] || 'Books';
+    
+    // Show modal
+    modal.style.display = 'flex';
+    
+    // Load books based on type
+    modalBookList.innerHTML = '<p class="empty-message">Loading...</p>';
+    
+    const db = firebase.firestore();
+    
+    if (type === 'borrowed') {
+        // Show current borrowed books (pending borrow requests)
+        db.collection('users').doc(user.uid)
+            .collection('borrowRequests')
+            .where('status', '==', 'pending')
+            .get()
+            .then(snapshot => {
+                // Filter for borrowed books (action = 'available')
+                const borrowedBooks = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.action === 'available') {
+                        borrowedBooks.push(data);
+                    }
+                });
+                
+                // Sort by date (newest first)
+                borrowedBooks.sort((a, b) => {
+                    const dateA = a.requestedAt?.toMillis?.() || 0;
+                    const dateB = b.requestedAt?.toMillis?.() || 0;
+                    return dateB - dateA;
+                });
+                
+                if (borrowedBooks.length === 0) {
+                    modalBookList.innerHTML = '<p class="empty-message">No borrowed books yet</p>';
+                } else {
+                    modalBookList.innerHTML = '';
+                    borrowedBooks.forEach(data => {
+                        modalBookList.innerHTML += createBookItemHTML(data, 'pending');
+                    });
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                modalBookList.innerHTML = '<p class="empty-message">Failed to load books</p>';
+            });
+    } else if (type === 'history') {
+        // Show all borrow requests (history)
+        db.collection('users').doc(user.uid)
+            .collection('borrowRequests')
+            .orderBy('requestedAt', 'desc')
+            .limit(20)
+            .get()
+            .then(snapshot => {
+                if (snapshot.empty) {
+                    modalBookList.innerHTML = '<p class="empty-message">No reading history yet</p>';
+                } else {
+                    modalBookList.innerHTML = '';
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const status = data.action === 'available' ? 'borrowed' : 'reserved';
+                        modalBookList.innerHTML += createBookItemHTML(data, status);
+                    });
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                modalBookList.innerHTML = '<p class="empty-message">Failed to load history</p>';
+            });
+    } else if (type === 'favorites') {
+        // Show interested books (notify me)
+        db.collection('users').doc(user.uid)
+            .collection('interestedBooks')
+            .orderBy('createdAt', 'desc')
+            .get()
+            .then(snapshot => {
+                if (snapshot.empty) {
+                    modalBookList.innerHTML = '<p class="empty-message">No favorite books yet</p>';
+                } else {
+                    modalBookList.innerHTML = '';
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        modalBookList.innerHTML += createBookItemHTML(data, 'interested');
+                    });
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                modalBookList.innerHTML = '<p class="empty-message">Failed to load favorites</p>';
+            });
+    }
+}
+
+// Create book item HTML
+function createBookItemHTML(data, status) {
+    const timestamp = data.requestedAt?.toDate?.() || data.createdAt?.toDate?.() || new Date();
+    const dateStr = timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    
+    let statusBadge = '';
+    if (status === 'pending') {
+        statusBadge = '<span class="book-status pending">Pending Pickup</span>';
+    } else if (status === 'borrowed') {
+        statusBadge = '<span class="book-status borrowed">Borrowed</span>';
+    } else if (status === 'reserved') {
+        statusBadge = '<span class="book-status reserved">Reserved</span>';
+    } else if (status === 'interested') {
+        statusBadge = '<span class="book-status pending">Watching</span>';
+    }
+    
+    return `
+        <div class="book-item">
+            <h4>${data.bookTitle || 'Unknown Book'}</h4>
+            <p>Student: ${data.studentName || 'Unknown'}</p>
+            <p>Date: ${dateStr}</p>
+            <div class="book-item-meta">
+                ${statusBadge}
+            </div>
+        </div>
+    `;
+}
+
+// Close book list modal
+function closeBookListModal() {
+    const modal = document.getElementById('bookListModal');
+    modal.style.display = 'none';
+}

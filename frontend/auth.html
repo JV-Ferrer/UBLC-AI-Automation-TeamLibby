@@ -3,12 +3,26 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Libby • Sign In / Register</title>
+    <title>Sign in - UBLC Library Assistant</title>
     <link rel="icon" type="image/x-icon" href="public/favicon.ico">
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Firebase SDKs for web -->
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyA9g6JtrL46t9vVwI9u6mpiUgdCUeeFMF4",
+        authDomain: "chatlibby-b9310.firebaseapp.com",
+        projectId: "chatlibby-b9310",
+        storageBucket: "chatlibby-b9310.firebasestorage.app",
+        messagingSenderId: "428551623308",
+        appId: "1:428551623308:web:b077885c48312310d0e1a9"
+      };
+      firebase.initializeApp(firebaseConfig);
+    </script>
   </head>
   <body>
     <div class="auth-shell">
@@ -76,11 +90,22 @@
           <p class="auth-hint">Already have an account? <button class="link-btn" type="button" onclick="switchAuthTab('login')">Login</button></p>
           <p id="register-error" class="auth-error"></p>
         </form>
+        <div class="auth-container">
+          <h1 class="welcome-title">Welcome back</h1>
+          <form id="emailAuthForm" class="auth-form">
+            <label>Email</label>
+            <input id="email" type="email" placeholder="you@example.com" required />
+            <label>Password</label>
+            <input id="password" type="password" placeholder="••••••••" required />
+            <button id="signInBtn" class="primary-btn" type="submit">Sign in</button>
+            <button id="registerBtn" class="secondary-btn" type="button">Create account</button>
+            <p id="authError" class="error-text" style="display:none"></p>
+          </form>
+        </div>
       </div>
     </div>
 
     <script src="auth.js"></script>
   </body>
 </html>
-
 

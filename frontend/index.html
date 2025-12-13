@@ -9,6 +9,23 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+        <!-- Firebase SDKs for web -->
+        <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+        <script>
+            // Initialize Firebase (public web config)
+            const firebaseConfig = {
+                apiKey: "AIzaSyA9g6JtrL46t9vVwI9u6mpiUgdCUeeFMF4",
+                authDomain: "chatlibby-b9310.firebaseapp.com",
+                projectId: "chatlibby-b9310",
+                storageBucket: "chatlibby-b9310.firebasestorage.app",
+                messagingSenderId: "428551623308",
+                appId: "1:428551623308:web:b077885c48312310d0e1a9"
+            };
+            firebase.initializeApp(firebaseConfig);
+            firebase.firestore();
+        </script>
 </head>
 <body>
    <!-- Onboarding Page -->
@@ -69,13 +86,24 @@
             </button>
             <div class="header-buttons">
             </div>
-            <button class="icon-btn relative">
+            <button id="notificationBell" class="icon-btn relative">
                 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
                     <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
                 </svg>
-                <span class="notification-dot"></span>
+                <span id="notificationBadge" class="notification-dot" style="display: none;"></span>
             </button>
+            
+            <!-- Notification Panel -->
+            <div id="notificationPanel" class="notification-panel" style="display: none;">
+                <div class="notification-header">
+                    <h3>Notifications</h3>
+                    <button id="clearNotifications" class="clear-btn">Clear All</button>
+                </div>
+                <div id="notificationList" class="notification-list">
+                    <p class="empty-message">No notifications yet</p>
+                </div>
+            </div>
         </header>
 
         <section class="welcome-section">
@@ -118,7 +146,7 @@
             </div>
             
             <div class="features-grid">
-                <div class="feature-card fade-in-up" onclick="navigateTo('chat')" style="animation-delay: 200ms">
+                <div class="feature-card fade-in-up" onclick="startFeatureChat('I want to search for books')" style="animation-delay: 200ms">
                     <div class="feature-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path>
@@ -131,7 +159,7 @@
                     <button class="feature-btn">Start Chat</button>
                 </div>
                 
-                <div class="feature-card fade-in-up" onclick="navigateTo('chat')" style="animation-delay: 300ms">
+                <div class="feature-card fade-in-up" onclick="startFeatureChat('What are the library hours?')" style="animation-delay: 300ms">
                     <div class="feature-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <circle cx="12" cy="12" r="10"></circle>
@@ -145,7 +173,7 @@
                     <button class="feature-btn">Start Chat</button>
                 </div>
                 
-                <div class="feature-card fade-in-up" onclick="navigateTo('chat')" style="animation-delay: 400ms">
+                <div class="feature-card fade-in-up" onclick="startFeatureChat('Tell me about the borrowing rules')" style="animation-delay: 400ms">
                     <div class="feature-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path>
@@ -158,7 +186,7 @@
                     <button class="feature-btn">Start Chat</button>
                 </div>
                 
-                <div class="feature-card fade-in-up" onclick="navigateTo('chat')" style="animation-delay: 500ms">
+                <div class="feature-card fade-in-up" onclick="startFeatureChat('Tell me about discussion rooms')" style="animation-delay: 500ms">
                     <div class="feature-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -224,7 +252,6 @@
                     <div class="chat-bubble assistant">
                         <p>Hello! I'm Libby, your UBLC Library assistant. How can I help you today?</p>
                     </div>
-                    <span class="message-time">Today, 09:00 AM</span>
                 </div>
             </div>
         </div>
@@ -293,7 +320,7 @@
                             <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path>
                         </svg>
                     </div>
-                    <p class="stat-value">0</p>
+                    <p class="stat-value" id="borrowed-count">0</p>
                     <p class="stat-label">Books Borrowed</p>
                 </div>
                 <div class="stat-item">
@@ -303,7 +330,7 @@
                             <polyline points="12 6 12 12 16 14"></polyline>
                         </svg>
                     </div>
-                    <p class="stat-value">0</p>
+                    <p class="stat-value" id="due-returns-count">0</p>
                     <p class="stat-label">Due Returns</p>
                 </div>
                 <div class="stat-item">
@@ -315,14 +342,14 @@
                             <line x1="3" y1="10" x2="21" y2="10"></line>
                         </svg>
                     </div>
-                    <p class="stat-value">0</p>
+                    <p class="stat-value" id="reserved-count">0</p>
                     <p class="stat-label">Reserved Books</p>
                 </div>
             </div>
         </section>
 
         <section class="profile-menu">
-            <div class="feature-card fade-in-up" style="animation-delay: 300ms">
+            <div class="feature-card fade-in-up" onclick="showBookList('borrowed')" style="animation-delay: 300ms; cursor: pointer;">
                 <div class="menu-item-content">
                     <h3>Borrowed Books</h3>
                     <p>View your current loans</p>
@@ -331,16 +358,16 @@
                     <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>
             </div>
-            <div class="feature-card fade-in-up" style="animation-delay: 500ms">
+            <div class="feature-card fade-in-up" onclick="showBookList('history')" style="animation-delay: 500ms; cursor: pointer;">
                 <div class="menu-item-content">
-                    <h3>Reading History</h3>
-                    <p>Books you've borrowed</p>
+                    <h3>My Requests</h3>
+                    <p>Borrow and reserve history</p>
                 </div>
                 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>
             </div>
-            <div class="feature-card fade-in-up" style="animation-delay: 600ms">
+            <div class="feature-card fade-in-up" onclick="showBookList('favorites')" style="animation-delay: 600ms; cursor: pointer;">
                 <div class="menu-item-content">
                     <h3>Favorites</h3>
                     <p>Saved books and resources</p>
@@ -493,6 +520,24 @@
         <div class="app-version">
             <p>UBLC Library Assistant</p>
             <p>Version 1.0.0</p>
+        </div>
+    </div>
+
+    <!-- Book List Modal -->
+    <div id="bookListModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Books</h2>
+                <button class="modal-close" onclick="closeBookListModal()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div id="modalBookList" class="modal-book-list">
+                <!-- Books will be loaded here -->
+            </div>
         </div>
     </div>
 
