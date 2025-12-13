@@ -10,3 +10,28 @@ The goal of this project is to demonstrate how AI and automation can improve acc
 
 Team Name: TeamLibby
 Course/Subject: IPT102
+
+# Features and Technologies Used
+# Key Features
+
+AI-powered chatbot for library inquiries
+
+Book search and basic library information access
+
+Automated responses for borrowing rules and policies
+
+Discussion room inquiry support
+
+Responsive web-based interface
+
+# Technologies Used
+
+Frontend: React, TypeScript, Vite, Tailwind CSS
+
+Backend: AI and automation workflows (planned / simulated)
+
+Version Control: Git & GitHub
+
+CI/CD: GitHub Actions (Super Linter)
+
+Data Storage: JSON / Local datasets
