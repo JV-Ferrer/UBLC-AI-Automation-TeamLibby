@@ -35,3 +35,60 @@ Version Control: Git & GitHub
 CI/CD: GitHub Actions (Super Linter)
 
 Data Storage: JSON / Local datasets
+
+# Setup and Deployment Instructions
+
+# Prerequisites
+
+Node.js (v18 or higher)
+
+Git
+
+npm or yarn
+
+# Deployment
+
+The frontend can be deployed using:
+
+GitHub Pages
+
+Netlify
+
+Vercel
+
+# CI/CD Process Details
+
+This project uses GitHub Actions for Continuous Integration.
+
+# CI/CD Workflow
+
+Triggered When:
+
+Pushing to the main branch
+
+Creating a pull request
+
+# Pipeline Steps:
+
+1. Checkout repository
+
+2. Run GitHub Super Linter
+
+3. Validate code quality and formatting
+
+# Purpose
+
+Ensures clean and consistent code
+
+Detects errors early
+
+Follows DevOps best practices
+
+# Team Member Roles
+
+| Name | Role | Responsibilities |
+|------|------|----------------|
+| John Rico Tolentino | Project Lead, Frontend, UI/UX | Oversees project and designs responsive interface |
+| Erik John Roxas | Backend Developer, Security | 	Develops backend and ensures data security |
+| John Vincent Ferrer | 	DevOps, Tester | Manages CI/CD, GitHub workflows, and system testing |
+
