@@ -12,19 +12,16 @@ Team Name: TeamLibby
 Course/Subject: IPT102
 
 # Features and Technologies Used
-# Key Features
 
-AI-powered chatbot for library inquiries
+## Key Features
 
-Book search and basic library information access
+- AI-powered chatbot for library inquiries
+- Book search and basic library information access
+- Automated responses for borrowing rules and policies
+- Discussion room inquiry support
+- Responsive web-based interface
 
-Automated responses for borrowing rules and policies
-
-Discussion room inquiry support
-
-Responsive web-based interface
-
-# Technologies Used
+## Technologies Used
 
 Frontend: React, TypeScript, Vite, Tailwind CSS
 
@@ -38,57 +35,48 @@ Data Storage: JSON / Local datasets
 
 # Setup and Deployment Instructions
 
-# Prerequisites
+## Prerequisites
 
-Node.js (v18 or higher)
+- Node.js (v18 or higher)
+- Git
+- npm or yarn
 
-Git
-
-npm or yarn
-
-# Deployment
+## Deployment
 
 The frontend can be deployed using:
 
-GitHub Pages
-
-Netlify
-
-Vercel
+- GitHub Pages
+- Netlify
+- Vercel
 
 # CI/CD Process Details
 
 This project uses GitHub Actions for Continuous Integration.
 
-# CI/CD Workflow
+## CI/CD Workflow
 
-Triggered When:
+**Triggered When:**
 
-Pushing to the main branch
+- Pushing to the main branch
+- Creating a pull request
 
-Creating a pull request
-
-# Pipeline Steps:
+## Pipeline Steps
 
 1. Checkout repository
-
 2. Run GitHub Super Linter
-
 3. Validate code quality and formatting
 
-# Purpose
+## Purpose
 
-Ensures clean and consistent code
-
-Detects errors early
-
-Follows DevOps best practices
+- Ensures clean and consistent code
+- Detects errors early
+- Follows DevOps best practices
 
 # Team Member Roles
 
 | Name | Role | Responsibilities |
 |------|------|----------------|
 | John Rico Tolentino | Project Lead, Frontend, UI/UX | Oversees project and designs responsive interface |
-| Erik John Roxas | Backend Developer, Security | 	Develops backend and ensures data security |
-| John Vincent Ferrer | 	DevOps, Tester | Manages CI/CD, GitHub workflows, and system testing |
+| Erik John Roxas | Backend Developer, Security | Develops backend and ensures data security |
+| John Vincent Ferrer | DevOps, Tester | Manages CI/CD, GitHub workflows, and system testing |
 
